@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from services.openai_service import create_chat_reply
+from services.openai_service import create_chat_reply, create_suggestions
 from services.announcement_service import fetch_announcement_context
 
 router = APIRouter()
@@ -31,6 +31,7 @@ async def chat(request: ChatRequest):
 
     try:
         reply = await create_chat_reply(messages, context_prompt)
-        return {"reply": reply}
+        suggestions = await create_suggestions(messages, reply)
+        return {"reply": reply, "suggestions": suggestions}
     except Exception as e:
         return {"error": str(e)}

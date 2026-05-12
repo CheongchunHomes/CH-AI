@@ -129,3 +129,4 @@ async def fetch_announcement_context(user_message: str = "") -> str | None:
         ]))
 
     return "\n\n".join(lines)
+
