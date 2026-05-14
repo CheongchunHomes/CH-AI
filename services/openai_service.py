@@ -8,12 +8,18 @@ load_dotenv()
 
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-async def create_chat_reply(messages: list[dict], context_prompt: str | None = None) -> str:
-    enriched_prompt = (
-        f"{SYSTEM_PROMPT}\n\n[현재 공고]\n{context_prompt}"
-        if context_prompt
-        else SYSTEM_PROMPT
-    )
+async def create_chat_reply(
+        messages: list[dict],
+        context_prompt: str | None = None,
+        user_context: str | None = None
+) -> str:
+    enriched_prompt = SYSTEM_PROMPT
+
+    if user_context:
+        enriched_prompt += f"\n\n[현재 상담 유저 정보]\n{user_context}"
+
+    if context_prompt:
+        enriched_prompt += f"\n\n[현재 공고]\n{context_prompt}"
 
     response = await client.responses.create(
         model="gpt-4.1-mini",
