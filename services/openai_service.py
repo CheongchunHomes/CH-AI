@@ -22,18 +22,20 @@ async def create_chat_reply(
         enriched_prompt += f"\n\n[현재 공고]\n{context_prompt}"
 
     response = await client.responses.create(
-        model="gpt-4.1-mini",
+        model="gpt-5-nano",
         instructions=enriched_prompt,
         input=messages,
         store=False,
+        max_output_tokens=5000,
+        reasoning={"effort": "minimal"},
     )
 
     return response.output_text
 
-async  def create_suggestions(messages: list[dict], last_reply: str) -> list[str]:
+async def create_suggestions(messages: list[dict], last_reply: str) -> list[str]:
     try:
         response = await client.responses.create(
-            model="gpt-4.1-mini",
+            model="gpt-5-nano",
             instructions=(
                 "You are a youth housing consultation AI. "
                 "Based on the conversation that just took place, generate 3 questions the user is likely to ask next. "
@@ -44,10 +46,13 @@ async  def create_suggestions(messages: list[dict], last_reply: str) -> list[str
             ),
             input=messages + [{"role": "assistant", "content": last_reply}],
             store=False,
+            max_output_tokens=500,
+            reasoning={"effort": "minimal"},
         )
         import json
         text = response.output_text.strip()
+        print(f"[suggestions raw] {text}")
         return json.loads(text)
     except Exception as e:
         print(f"[suggestions 생성실패] {e}]")
-        return[]
+        return []
