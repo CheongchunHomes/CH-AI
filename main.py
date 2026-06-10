@@ -10,6 +10,12 @@ from services.policy_service import init_policy_embeddings
 
 load_dotenv()
 
+CORS_ALLOW_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
+
 async def schedule_reindex():
     # 1시간(3600초)마다 캐시 삭제 후 재임베딩
     while True:
@@ -42,7 +48,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=CORS_ALLOW_ORIGINS,
     allow_methods=["POST"],
     allow_headers=["Content-Type"],
 )
