@@ -1,9 +1,6 @@
 services:
   ch-ai:
     image: ${AI_IMAGE:-ch-ai:local}
-    build:
-      context: ..
-      dockerfile: deploy/Dockerfile
     container_name: myapp-ch-ai
     restart: unless-stopped
     env_file:
