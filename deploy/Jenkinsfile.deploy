@@ -2,11 +2,8 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'IMAGE_NAME', defaultValue: 'your-dockerhub-username/ch-ai', description: 'AI Docker image name')
+        string(name: 'IMAGE_NAME', defaultValue: 'garlgaru/ch-ai', description: 'AI Docker image name')
         string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'AI Docker image tag')
-        string(name: 'EC2_HOST', defaultValue: '', description: 'Deploy target host')
-        string(name: 'EC2_USER', defaultValue: 'ubuntu', description: 'Deploy target SSH user')
-        string(name: 'EC2_DEPLOY_DIR', defaultValue: '/opt/ch-ai', description: 'Deploy directory on EC2')
         credentials(name: 'DOCKER_REGISTRY_CREDENTIALS', defaultValue: 'docker-registry', description: 'Docker registry username/password', credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl')
         credentials(name: 'EC2_SSH_KEY', defaultValue: 'ec2-ssh-key', description: 'EC2 SSH private key', credentialType: 'com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey')
     }
@@ -34,16 +31,18 @@ pipeline {
         }
 
         stage('Deploy To EC2') {
-            when {
-                expression { return params.EC2_HOST?.trim() }
-            }
             steps {
+                sh '''
+                    test -n "$AI_EC2_HOST"
+                    test -n "$AI_EC2_USER"
+                    test -n "$AI_EC2_DEPLOY_DIR"
+                '''
                 sshagent(credentials: ["${params.EC2_SSH_KEY}"]) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no "$EC2_USER@$EC2_HOST" "mkdir -p '$EC2_DEPLOY_DIR/deploy'"
-                        scp -o StrictHostKeyChecking=no deploy/docker-compose.yml "$EC2_USER@$EC2_HOST:$EC2_DEPLOY_DIR/deploy/docker-compose.yml"
-                        ssh -o StrictHostKeyChecking=no "$EC2_USER@$EC2_HOST" "
-                            cd '$EC2_DEPLOY_DIR' &&
+                        ssh -o StrictHostKeyChecking=no "$AI_EC2_USER@$AI_EC2_HOST" "mkdir -p '$AI_EC2_DEPLOY_DIR/deploy'"
+                        scp -o StrictHostKeyChecking=no deploy/docker-compose.yml "$AI_EC2_USER@$AI_EC2_HOST:$AI_EC2_DEPLOY_DIR/deploy/docker-compose.yml"
+                        ssh -o StrictHostKeyChecking=no "$AI_EC2_USER@$AI_EC2_HOST" "
+                            cd '$AI_EC2_DEPLOY_DIR' &&
                             AI_IMAGE='$FULL_IMAGE' docker compose --env-file .env -f deploy/docker-compose.yml pull ch-ai &&
                             AI_IMAGE='$FULL_IMAGE' docker compose --env-file .env -f deploy/docker-compose.yml up -d --no-build ch-ai &&
                             docker image prune -f
